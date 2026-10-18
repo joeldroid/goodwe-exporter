@@ -1,0 +1,8 @@
+scrape_configs:
+  - job_name: goodwe
+    scrape_interval: 15s
+    scrape_timeout: 10s   # must exceed the exporter's SCRAPE_TIMEOUT_SECONDS (default 8)
+    static_configs:
+      - targets: ["goodwe-exporter:9877"]
+        labels:
+          site: home

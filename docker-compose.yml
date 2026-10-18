@@ -1,0 +1,19 @@
+services:
+  goodwe-exporter:
+    build: .
+    image: goodwe-exporter:latest
+    restart: unless-stopped
+    ports:
+      - "9877:9877"
+    environment:
+      INVERTER_HOST: ${INVERTER_HOST:?set INVERTER_HOST to the inverter's IP address}
+      INVERTER_PORT: ${INVERTER_PORT:-8899}
+      INVERTER_FAMILY: ${INVERTER_FAMILY:-}
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-5}
+      SCRAPE_TIMEOUT_SECONDS: ${SCRAPE_TIMEOUT_SECONDS:-8}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
