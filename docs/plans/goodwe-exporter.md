@@ -36,7 +36,7 @@ tests/{conftest,test_config,test_metrics,test_client,test_app}.py
 Dockerfile, docker-compose.yml, .dockerignore
 prometheus/prometheus.yml.example
 README.md
-docs/plans/goodwe-prometheus-exporter.md
+docs/plans/goodwe-exporter.md
 ```
 
 ## 3. Configuration (env vars, validated at startup)

@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir --no-deps .
 
 FROM python:3.12-slim
 
-LABEL org.opencontainers.image.title="goodwe-prometheus-exporter" \
+LABEL org.opencontainers.image.title="goodwe-exporter" \
       org.opencontainers.image.description="Prometheus exporter for GoodWe solar inverters" \
       org.opencontainers.image.licenses="see LICENSE"
 

@@ -1,4 +1,4 @@
-# goodwe-prometheus-exporter
+# goodwe-exporter
 
 A Prometheus exporter for GoodWe solar inverters, built on the
 [`goodwe`](https://github.com/marcelblijleven/goodwe) library and packaged as a Docker container.
@@ -93,4 +93,4 @@ python3 -m venv .venv
 INVERTER_HOST=192.168.1.50 .venv/bin/python -m goodwe_exporter
 ```
 
-The implementation plan is in [`docs/plans/`](docs/plans/goodwe-prometheus-exporter.md).
+The implementation plan is in [`docs/plans/`](docs/plans/goodwe-exporter.md).
