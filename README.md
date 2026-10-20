@@ -1,6 +1,6 @@
 # goodwe-exporter
 
-A Prometheus exporter for GoodWe solar inverters, built on the
+An exporter for GoodWe solar inverters, built on the
 [`goodwe`](https://github.com/marcelblijleven/goodwe) library and packaged as a Docker container.
 
 The inverter is read when Prometheus scrapes `/metrics`. Reads are cached for a few seconds, serialised,
