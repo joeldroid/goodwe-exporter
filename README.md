@@ -6,21 +6,93 @@ An exporter for GoodWe solar inverters, built on the
 The inverter is read when Prometheus scrapes `/metrics`. Reads are cached for a few seconds, serialised,
 and bounded by a timeout, so the inverter is never hammered and a dead inverter never hangs a scrape.
 
-## Quick start
+## Get started
+
+The image is published on Docker Hub as
+[`joeldroid/goodwe-exporter`](https://hub.docker.com/r/joeldroid/goodwe-exporter):
 
 ```sh
-docker build -t goodwe-exporter .
-docker run --rm -p 9877:9877 -e INVERTER_HOST=192.168.1.50 goodwe-exporter
-curl localhost:9877/metrics
+docker pull joeldroid/goodwe-exporter
 ```
 
-Or with Compose:
+### 1. Find your inverter's IP address
+
+Look it up in your router's client list and give it a static lease so it does not change. The exporter
+and the inverter must be on the same network, and the inverter must be reachable on UDP `8899` (or Modbus/TCP
+`502`, see [Configuration](#configuration)).
+
+### 2. Run it
+
+**With plain Docker:**
 
 ```sh
-INVERTER_HOST=192.168.1.50 docker compose up --build
+docker run -d --name goodwe-exporter --restart unless-stopped \
+  -p 9877:9877 -e INVERTER_HOST=192.168.1.50 \
+  joeldroid/goodwe-exporter
 ```
 
-Add the scrape job from [`prometheus/prometheus.yml.example`](prometheus/prometheus.yml.example) to Prometheus.
+**With Docker Compose:**
+
+Save this as `docker-compose.yml` (it is the same as the [`docker-compose.yml`](docker-compose.yml) in this
+repository, minus the `build` line):
+
+```yaml
+services:
+  goodwe-exporter:
+    image: joeldroid/goodwe-exporter:latest
+    restart: unless-stopped
+    ports:
+      - "9877:9877"
+    environment:
+      INVERTER_HOST: ${INVERTER_HOST}
+      INVERTER_PORT: ${INVERTER_PORT:-8899}
+      INVERTER_FAMILY: ${INVERTER_FAMILY:-}
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-5}
+      SCRAPE_TIMEOUT_SECONDS: ${SCRAPE_TIMEOUT_SECONDS:-8}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+```
+
+Then start it, passing the inverter's IP address:
+
+```sh
+INVERTER_HOST=192.168.1.50 docker compose up -d
+```
+
+Compose also reads settings from a `.env` file next to `docker-compose.yml`, so you can keep them there
+instead:
+
+```sh
+echo "INVERTER_HOST=192.168.1.50" > .env
+docker compose up -d
+```
+
+### 3. Check that it works
+
+```sh
+curl localhost:9877/healthz
+curl localhost:9877/metrics | grep goodwe_up
+```
+
+`goodwe_up 1` means the inverter was read successfully. If you see `goodwe_up 0`, check the logs with
+`docker compose logs goodwe-exporter` and see [Things to know](#things-to-know) (inverters often stop
+answering at night).
+
+### 4. Point Prometheus at it
+
+Add the scrape job from [`prometheus/prometheus.yml.example`](prometheus/prometheus.yml.example), changing the
+target to wherever the exporter runs (for example `192.168.1.10:9877`), then reload Prometheus.
+
+### Build from source
+
+```sh
+docker build -t joeldroid/goodwe-exporter .
+INVERTER_HOST=192.168.1.50 docker compose up -d
+```
 
 ## Configuration
 

@@ -1,7 +1,7 @@
 services:
   goodwe-exporter:
     build: .
-    image: goodwe-exporter:latest
+    image: joeldroid/goodwe-exporter:latest
     restart: unless-stopped
     ports:
       - "9877:9877"
