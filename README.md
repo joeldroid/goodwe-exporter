@@ -1,5 +1,9 @@
 # goodwe-exporter
 
+<p align="center">
+  <img src="docs/screenshot-2026-10-23-235847.png" alt="GoodWe exporter Grafana dashboard screenshot">
+</p>
+
 An exporter for GoodWe solar inverters, built on the
 [`goodwe`](https://github.com/marcelblijleven/goodwe) library and packaged as a Docker container.
 
