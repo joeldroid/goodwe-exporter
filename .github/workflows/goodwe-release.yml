@@ -1,0 +1,84 @@
+name: GoodWe release check
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+env:
+  UPSTREAM: marcelblijleven/goodwe
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compare pinned and latest release
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api "repos/$UPSTREAM/releases/latest" --jq .tag_name)
+          latest=${latest#v}
+          current=$(sed -n 's/^goodwe==\(.*\)$/\1/p' requirements.txt)
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [ "$latest" = "$current" ]; then
+            echo "goodwe is up to date at $current"
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --heads origin "bump-goodwe-$latest" > /dev/null; then
+            echo "bump-goodwe-$latest already exists"
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v6
+        if: steps.version.outputs.needed == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Bump the pin
+        if: steps.version.outputs.needed == 'true'
+        env:
+          LATEST: ${{ steps.version.outputs.latest }}
+        run: |
+          sed -i "s/^goodwe==.*/goodwe==$LATEST/" requirements.txt
+          sed -i "s/\"goodwe==.*\"/\"goodwe==$LATEST\"/" pyproject.toml
+
+      - name: Run tests
+        if: steps.version.outputs.needed == 'true'
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e . --no-deps
+          pytest
+
+      - name: Open pull request
+        if: steps.version.outputs.needed == 'true'
+        env:
+          # A PR opened with the default token does not trigger other workflows. Set a
+          # GH_PAT secret if the Docker build check should run on these PRs.
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          CURRENT: ${{ steps.version.outputs.current }}
+          LATEST: ${{ steps.version.outputs.latest }}
+        run: |
+          branch="bump-goodwe-$LATEST"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add requirements.txt pyproject.toml
+          git commit -m "bump goodwe to $LATEST"
+          git push origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Bump goodwe to $LATEST" \
+            --body "Bumps [\`goodwe\`](https://github.com/$UPSTREAM) from $CURRENT to $LATEST.
+
+          [Release notes](https://github.com/$UPSTREAM/releases/tag/v$LATEST)
+
+          Opened automatically by the GoodWe release check workflow. Tests passed on this bump."

@@ -1,4 +1,4 @@
-# goodwe-exporter
+# GoodWe Exporter
 
 <p align="center">
   <img src="docs/screenshot-2026-10-23-235847.png" alt="GoodWe exporter Grafana dashboard screenshot">
